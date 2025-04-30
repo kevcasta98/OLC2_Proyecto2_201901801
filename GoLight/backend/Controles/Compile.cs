@@ -57,14 +57,18 @@ namespace Controllers
 
             var tree = parser.program();
 
-            var visitor = new CompiladorVisitor();
-            visitor.Visit(tree);
+            var interprete = new InterpreteVisitor();
+            interprete.Visit(tree);
+
+            var compi = new CompiladorVisitor();
+            compi.Visit(tree);
+
 
             //Console.WriteLine(Ok(new { symbols = visitor.tablaSimbolos.MostrarSimbolos() }));
 
             return Ok(new
             {
-                result = visitor.output,
+                result = compi.codigo.ToString(),
                
             });
 
