@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "SL+BSWQ1TXs=",
+  "dgSpecHash": "pe1rqUKVTVY=",
   "success": true,
-  "projectFilePath": "/home/kevin/Compi2/Prueba/GoLight/backend/GoLight.csproj",
+  "projectFilePath": "/home/kevin/Compi2/P2/OLC2_Proyecto2_201901801/GoLight/backend/GoLight.csproj",
   "expectedPackageFiles": [
     "/home/kevin/.nuget/packages/antlr4.runtime.standard/4.13.1/antlr4.runtime.standard.4.13.1.nupkg.sha512",
     "/home/kevin/.nuget/packages/microsoft.aspnetcore.openapi/9.0.2/microsoft.aspnetcore.openapi.9.0.2.nupkg.sha512",

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/home/kevin/Compi2/Prueba/GoLight/backend/GoLight.csproj": {}
+    "/home/kevin/Compi2/P2/OLC2_Proyecto2_201901801/GoLight/backend/GoLight.csproj": {}
   },
   "projects": {
-    "/home/kevin/Compi2/Prueba/GoLight/backend/GoLight.csproj": {
+    "/home/kevin/Compi2/P2/OLC2_Proyecto2_201901801/GoLight/backend/GoLight.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/kevin/Compi2/Prueba/GoLight/backend/GoLight.csproj",
+        "projectUniqueName": "/home/kevin/Compi2/P2/OLC2_Proyecto2_201901801/GoLight/backend/GoLight.csproj",
         "projectName": "GoLight",
-        "projectPath": "/home/kevin/Compi2/Prueba/GoLight/backend/GoLight.csproj",
+        "projectPath": "/home/kevin/Compi2/P2/OLC2_Proyecto2_201901801/GoLight/backend/GoLight.csproj",
         "packagesPath": "/home/kevin/.nuget/packages/",
-        "outputPath": "/home/kevin/Compi2/Prueba/GoLight/backend/obj/",
+        "outputPath": "/home/kevin/Compi2/P2/OLC2_Proyecto2_201901801/GoLight/backend/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/home/kevin/.nuget/NuGet/NuGet.Config"
