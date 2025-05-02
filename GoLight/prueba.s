@@ -1,16 +1,16 @@
 .text
 .global _start
 _start:
-// Imprimir
-// Constante: 1
-MOV x0, #1
-STR x0, [SP, #-8]!
+// Declarando variable: var1 de tipo: int
+// Estoy en ExpInteger
 // Constante: 10
 MOV x0, #10
 STR x0, [SP, #-8]!
-LDR x1, [SP], #8
-LDR x0, [SP], #8
-ADD x0, x0, x1
+// Imprimir
+MOV x0, #0
+ADD x0, sp, x0
+// Estoy en un ID: var1 puntero: 0
+LDR x0, [x0, #0]
 STR x0, [SP, #-8]!
 LDR x0, [SP], #8
 MOV X0, x0

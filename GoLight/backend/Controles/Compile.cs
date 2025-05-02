@@ -54,23 +54,29 @@ namespace Controllers
             var tokens = new CommonTokenStream(lexer);
             var parser = new AnalizadorParser(tokens);
 
-
-            var tree = parser.program();
-
-            var interprete = new InterpreteVisitor();
-            interprete.Visit(tree);
-
-            var compi = new CompiladorVisitor();
-            compi.Visit(tree);
-
-
-            //Console.WriteLine(Ok(new { symbols = visitor.tablaSimbolos.MostrarSimbolos() }));
-
-            return Ok(new
+            try
             {
-                result = compi.codigo.ToString(),
-               
-            });
+                var tree = parser.program();
+
+                var interprete = new InterpreteVisitor();
+                interprete.Visit(tree);
+
+                var compi = new CompiladorVisitor();
+                compi.Visit(tree);
+
+
+                //Console.WriteLine(Ok(new { symbols = visitor.tablaSimbolos.MostrarSimbolos() }));
+
+                return Ok(new
+                {
+                    result = compi.codigo.ToString(),
+                
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
 
         }
 

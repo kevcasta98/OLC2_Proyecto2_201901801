@@ -1,4 +1,4 @@
-// Generated from /home/kevin/Compi2/Prueba/GoLight/backend/Gramatica/Analizador.g4 by ANTLR 4.13.1
+// Generated from /home/kevin/Compi2/P2/OLC2_Proyecto2_201901801/GoLight/backend/Gramatica/Analizador.g4 by ANTLR 4.13.1
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;
