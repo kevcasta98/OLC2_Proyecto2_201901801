@@ -12,13 +12,25 @@ program: dcl*;
 
 dcl:
 	'fmt.Println(' expr (',' expr)* ')' ';'?	# PrintStmt
-	| 'if' '('? expr ')'? block ('else' block)?	# IfStmt
+	| 'if'  expr  block ('else' (dcl|block) )?	    # IfStmt
 	| 'for' '('? expr ')'? block				# WhileStmt
+	| 'for' '('? forID expr ';' expr ')' block	# ForStmt
+	//| 'for' '(' forID expr ';' expr ')' stmt	  # ForStmt
+	| 'switch' expr '{' caseList '}'	    # SwitchStmt
 	| 'func' ID '(' parametros? ')' tipo? block	# FuncDeclStmt
 	| 'return' expr ';'?						# ReturnStmt
 	| varCall ';'?								# FuncCallStmt
 	| varAsign									# AsignStmt
-	| varDcl									# VarDeclStmt;
+	| varDcl									# VarDeclStmt	
+	| '{' dcl* '}'								# BlockStmt
+	| expr ';'?							# ExprStmt					
+;
+
+forID: varDcl | expr ';';
+caseList: caseStmt+;  
+caseStmt: 'case' expr ':' dcl*  // Cada case puede tener varias sentencias
+    | 'default' ':' dcl*        // Default solo puede tener una sentencia
+;
 
 block: '{' dcl* '}';
 
@@ -34,19 +46,17 @@ param: ID tipo;
 args: expr (',' expr)*;
 
 expr:
-	'-' expr									# Negate
-	| expr op = ('*' | '/' | '%') expr			# MulDivMod
+	'!' expr						# Not
+	| '-' expr									# Negate
 	| ID op = ('++' | '--')						# IncrementoDecremento
+	| expr op = ('*' | '/' | '%') expr			# MulDivMod
 	| expr op = ('+' | '-') expr				# AddSub
 	| expr op = ('<' | '<=' | '>' | '>=') expr	# Relational
 	| expr op = ('==' | '!=') expr				# IgualDesigual
+	| ID op = ('+=' | '-=') expr				# AsigAddSub
 	| expr op = '&&' expr						# And
 	| expr op = '||' expr						# Or
-	| ID op = ('+=' | '-=') expr				# AsigAddSub
-	| expr op = ('*' | '/') expr				# MulDiv
-	//| expr op = ('+' | '-') expr # AddSub | expr op = ('<' | '>') expr # Compare
-	//| expr op = ('&&' | '||') expr	# Logical
-	| '!' expr						# Not
+
 	| INT							# ExpInteger
 	| DECIMAL						# ExpDouble
 	| CADENA						# ExpString

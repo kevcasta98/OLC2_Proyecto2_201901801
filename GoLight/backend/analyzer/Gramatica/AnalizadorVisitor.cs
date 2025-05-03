@@ -60,6 +60,20 @@ public interface IAnalizadorVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitWhileStmt([NotNull] AnalizadorParser.WhileStmtContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>ForStmt</c>
+	/// labeled alternative in <see cref="AnalizadorParser.dcl"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitForStmt([NotNull] AnalizadorParser.ForStmtContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SwitchStmt</c>
+	/// labeled alternative in <see cref="AnalizadorParser.dcl"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSwitchStmt([NotNull] AnalizadorParser.SwitchStmtContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>FuncDeclStmt</c>
 	/// labeled alternative in <see cref="AnalizadorParser.dcl"/>.
 	/// </summary>
@@ -94,6 +108,38 @@ public interface IAnalizadorVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitVarDeclStmt([NotNull] AnalizadorParser.VarDeclStmtContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>BlockStmt</c>
+	/// labeled alternative in <see cref="AnalizadorParser.dcl"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitBlockStmt([NotNull] AnalizadorParser.BlockStmtContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ExprStmt</c>
+	/// labeled alternative in <see cref="AnalizadorParser.dcl"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExprStmt([NotNull] AnalizadorParser.ExprStmtContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="AnalizadorParser.forID"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitForID([NotNull] AnalizadorParser.ForIDContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="AnalizadorParser.caseList"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitCaseList([NotNull] AnalizadorParser.CaseListContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="AnalizadorParser.caseStmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitCaseStmt([NotNull] AnalizadorParser.CaseStmtContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="AnalizadorParser.block"/>.
 	/// </summary>
@@ -164,13 +210,6 @@ public interface IAnalizadorVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitAddSub([NotNull] AnalizadorParser.AddSubContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>MulDiv</c>
-	/// labeled alternative in <see cref="AnalizadorParser.expr"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitMulDiv([NotNull] AnalizadorParser.MulDivContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>Parens</c>
 	/// labeled alternative in <see cref="AnalizadorParser.expr"/>.

@@ -138,27 +138,26 @@ public class InterpreteVisitor : AnalizadorBaseVisitor<object>
     // VisitVarDcl
     public override object VisitVarDeclStmt(AnalizadorParser.VarDeclStmtContext context)
     {
-
         var varDecl = context.varDcl();
+
         if (varDecl.tipo() != null)
-        {//Esto es para una declaracion explicita
+        {
             string id = varDecl.ID().GetText();
             string tipoVariable = varDecl.tipo().GetText();
             int linea = context.Start.Line;
             int columna = context.Start.Column;
 
+            object value;
 
-            //SymbolType type = Enum.Parse<SymbolType>(tipoVariable);
-            object value = Visit(varDecl.expr());
             if (varDecl.expr() != null)
             {
-
+                value = Visit(varDecl.expr());
 
                 // Validar si el tipo de la variable coincide con el valor asignado
                 if (!ValidarTipo(tipoVariable, value))
                 {
-                    errores.setError("Sintactico", $"No se puede asignar un valor de tipo {value.GetType().Name} a la variable '{id}' de tipo {tipoVariable}", linea, columna);
-                    return $"Error Sintactico, No se puede asignar un valor de tipo {value.GetType().Name} a la variable '{id}' de tipo {tipoVariable}";
+                    errores.setError("Sintáctico", $"No se puede asignar un valor de tipo {value.GetType().Name} a la variable '{id}' de tipo {tipoVariable}", linea, columna);
+                    return $"Error Sintáctico, No se puede asignar un valor de tipo {value.GetType().Name} a la variable '{id}' de tipo {tipoVariable}";
                 }
             }
             else
@@ -166,34 +165,22 @@ public class InterpreteVisitor : AnalizadorBaseVisitor<object>
                 value = ObtenerValorPorDefecto(tipoVariable);
             }
 
-
-            // Validación de tipo
-            /*if (!IsValidType(value, type))
-                {
-                    throw new Exception($"Type mismatch: Cannot assign {value?.GetType().Name} to {type}");
-                }
-            */
             currentEnvironment.SetVariable(id, value, SymbolType.Integer);
         }
-        else if (varDecl.expr() != null)  // Caso de declaración implícita
+        else if (varDecl.expr() != null) // Declaración implícita
         {
             string id = varDecl.ID().GetText();
             int linea = context.Start.Line;
             int columna = context.Start.Column;
-            // Evaluamos la expresión para determinar su tipo
             object valor = Visit(varDecl.expr());
             object tipoInferido = ImplicitaTipo(valor);
             currentEnvironment.SetVariable(id, valor, SymbolType.Integer);
-            /* if (!exito){
-                 errores.setError("Semantico","La variable que intentas crear es una palabra reservada o ya existe",linea,columna);
-                 return new StringValue("Error semantico, la variable que intentas crear es una palabra reservada");
-             }*/
             Console.WriteLine("Nombre de la variable: " + id + " (Inferido: " + tipoInferido + ") valor: " + valor);
-
         }
 
         return null;
     }
+
     private object ImplicitaTipo(object valor)
     {
         if (valor is int) return "int";
@@ -223,7 +210,7 @@ public class InterpreteVisitor : AnalizadorBaseVisitor<object>
         {
             "int" => 0,
             "float64" => 0.0,
-            "String" => "",
+            "string" => "",
             "bool" => false,
             "rune" => '\0',
             _ => throw new Exception($"Tipo desconocido: {tipo}")
@@ -335,7 +322,6 @@ public class InterpreteVisitor : AnalizadorBaseVisitor<object>
         //return context.GetText().Trim('\'');
     }
 
-
     // VisitMulDiv
     public override object VisitMulDivMod(AnalizadorParser.MulDivModContext context)
     {
@@ -345,6 +331,7 @@ public class InterpreteVisitor : AnalizadorBaseVisitor<object>
         var right = Visit(context.expr(1));
         int linea = context.Start.Line;
         int columna = context.Start.Column;
+        
 
         var tipoLeft = left.GetType().Name;
         var tipoRight = right.GetType().Name;
@@ -427,6 +414,43 @@ public class InterpreteVisitor : AnalizadorBaseVisitor<object>
         }
         return null;
     }
+    public override object VisitIgualDesigual(AnalizadorParser.IgualDesigualContext context)
+    {
+        //| expr op = ('==' | '!=') expr				# IgualDesigual
+        string operador = context.GetChild(1).GetText();
+    
+        var left = Visit(context.expr(0));
+        var right = Visit(context.expr(1));
+        int linea = context.Start.Line;
+        int columna = context.Start.Column;
+        if(operador == "=="){
+            if (left.Equals(right))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else if(operador == "!="){
+            if (!left.Equals(right))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else{
+            errores.setError("Semantico", "No se puede realizar la operación de igualdad o desigualdad", linea, columna);
+            return "Error Semantico, No se puede realizar la operación de igualdad o desigualdad";
+        }
+        
+        return null;
+
+    }
 
     // VisitAddSub
     public override object VisitAddSub(AnalizadorParser.AddSubContext context)
@@ -505,33 +529,169 @@ public class InterpreteVisitor : AnalizadorBaseVisitor<object>
                 return "Error Semantico, error de tipos en la resta";
             }
         }
+
+
         return null;
 
     }
 
-    // VisitCompare
-    /*public override object VisitCompare(AnalizadorParser.CompareContext context)
+    // 	# And
+    public override object VisitAnd([NotNull] AnalizadorParser.AndContext context)
     {
-        dynamic left = Visit(context.expr(0));
-        dynamic right = Visit(context.expr(1));
-
-        if (!(left is int || left is double) || !(right is int || right is double))
-            throw new Exception("Comparison operators can only be applied to numbers.");
-
-        return context.op.Text == "<" ? left < right : left > right;
+        //expr op = '&&' expr
+        string operador = context.GetChild(1).GetText();
+        var left = Visit(context.expr(0));
+        var right = Visit(context.expr(1));
+        int linea = context.Start.Line; 
+        int columna = context.Start.Column;
+        if (operador == "&&")
+        {
+            Console.WriteLine(left + " && " + right);
+            if (left is bool && right is bool)
+            {
+                return (bool)left && (bool)right;
+            }
+            else
+            {
+                errores.setError("Semantico", "No se puede realizar la operación de and", linea, columna);
+                return "Error Semantico, No se puede realizar la operación de and";
+            }
+        }
+        else
+        {
+            errores.setError("Semantico", "No se puede realizar la operación de and", linea, columna);
+            return "Error Semantico, No se puede realizar la operación de and";
+        }
+        return null;
+    }
+    // 	# Or
+    public override object VisitOr([NotNull] AnalizadorParser.OrContext context)
+    {
+        //expr op = '||' expr
+        string operador = context.GetChild(1).GetText();
+        var left = Visit(context.expr(0));
+        var right = Visit(context.expr(1));
+        int linea = context.Start.Line; 
+        int columna = context.Start.Column;
+        if (operador == "||")
+        {
+            Console.WriteLine(left + " || " + right);
+            if (left is bool && right is bool)
+            {
+                return (bool)left || (bool)right;
+            }
+            else
+            {
+                errores.setError("Semantico", "No se puede realizar la operación de Or", linea, columna);
+                return "Error Semantico, No se puede realizar la operación de Or";
+            }
+        }
+        else
+        {
+            errores.setError("Semantico", "No se puede realizar la operación de Or", linea, columna);
+            return "Error Semantico, No se puede realizar la operación de Or";
+        }
+        return null;
     }
 
-    // VisitLogical
-    public override object VisitLogical(AnalizadorParser.LogicalContext context)
+    //Relational
+    public override object VisitRelational(AnalizadorParser.RelationalContext context)
     {
-        object left = Visit(context.expr(0));
-        object right = Visit(context.expr(1));
-
-        if (!(left is bool) || !(right is bool))
-            throw new Exception("Logical operators can only be applied to booleans.");
-
-        return context.op.Text == "&&" ? (bool)left && (bool)right : (bool)left || (bool)right;
-    }*/
+        //expr op = ('<' | '<=' | '>' | '>=') expr	# Relational
+        string operador = context.GetChild(1).GetText();
+        var left = Visit(context.expr(0));
+        var right = Visit(context.expr(1));
+        int linea = context.Start.Line;
+        int columna = context.Start.Column;
+        var tipoLeft = left.GetType().Name;
+        var tipoRight = right.GetType().Name;
+        if (operador == "<")
+        {
+            Console.WriteLine(left + " < " + right);
+            if (tipoLeft == "Int32" && tipoRight == "Int32")
+            {
+                return (int)left < (int)right;
+            }
+            else if (tipoLeft == "Int32" && tipoRight == "Double")
+            {
+                return (int)left < (double)right;
+            }
+            else if (tipoLeft == "Double" && tipoRight == "Int32")
+            {
+                return (double)left < (int)right;
+            }
+            else if (tipoLeft == "Double" && tipoRight == "Double")
+            {
+                return (double)left < (double)right;
+            }
+        }
+        else if (operador == "<=")
+        {
+            Console.WriteLine(left + " <= " + right);
+            if (tipoLeft == "Int32" && tipoRight == "Int32")
+            {
+                return (int)left <= (int)right;
+            }
+            else if (tipoLeft == "Int32" && tipoRight == "Double")
+            {
+                return (int)left <= (double)right;
+            }
+            else if (tipoLeft == "Double" && tipoRight == "Int32")
+            {
+                return (double)left <= (int)right;
+            }
+            else if (tipoLeft == "Double" && tipoRight == "Double")
+            {
+                return (double)left <= (double)right;
+            }
+        }
+        else if (operador == ">")
+        {
+            Console.WriteLine(left + " > " + right);
+            if (tipoLeft == "Int32" && tipoRight == "Int32")
+            {
+                return (int)left > (int)right;
+            }
+            else if (tipoLeft == "Int32" && tipoRight == "Double")
+            {
+                return (int)left > (double)right;
+            }
+            else if (tipoLeft == "Double" && tipoRight == "Int32")
+            {
+                return (double)left > (int)right;
+            }
+            else if (tipoLeft == "Double" && tipoRight == "Double")
+            {
+                return (double)left > (double)right;
+            }
+        }
+        else if (operador == ">=")
+        {
+            Console.WriteLine(left + " >=" + right);
+            if (tipoLeft == "Int32" && tipoRight == "Int32")
+            {
+                return (int)left >= (int)right;
+            }
+            else if (tipoLeft == "Int32" && tipoRight == "Double")
+            {
+                return (int)left >= (double)right;
+            }
+            else if (tipoLeft == "Double" && tipoRight == "Int32")
+            {
+                return (double)left >= (int)right;
+            }
+            else if (tipoLeft == "Double" && tipoRight == "Double")
+            {
+                return (double)left >= (double)right;
+            }
+        }
+        else
+        {
+            errores.setError("Semantico", "No se puede realizar la operación de comparación", linea, columna);
+            return "Error Semantico, No se puede realizar la operación de comparación";
+        }
+        return null;
+    }
 
     // VisitNot
     public override object VisitNot(AnalizadorParser.NotContext context)
@@ -542,59 +702,59 @@ public class InterpreteVisitor : AnalizadorBaseVisitor<object>
         throw new Exception("Negation (!) can only be applied to booleans.");
     }
 
-    // VisitIfStmt
-    public override object VisitIfStmt(AnalizadorParser.IfStmtContext context)
+    //IncrementoDecremento
+    public override object VisitIncrementoDecremento([NotNull] AnalizadorParser.IncrementoDecrementoContext context)
     {
-        object condition = Visit(context.expr());
-
-        if (condition is not bool)
-            throw new Exception("If statement condition must be a boolean.");
-
-        object ret = null;
-        if ((bool)condition)
-        {
-            Entornos new_environment = new Entornos(currentEnvironment);
-
-            currentEnvironment = new_environment;
-            ret = Visit(context.block(0)); // Ejecutar el bloque del 'if'
-            currentEnvironment = new_environment.Parent;
+        //++ | --
+        var variable = context.ID().GetText();
+        var operador = context.op.Text;
+        var variableExistente = currentEnvironment.GetVariable(variable);
+        if (variableExistente == null){
+            errores.setError("Semantico", "La variable " + variable + " no existe", context.Start.Line, context.Start.Column);
+            return "Error Semantico, la variable no existe";
         }
-        else if (context.block().Length > 1)
+        if (operador == "++")
         {
-            ret = Visit(context.block(1)); // Ejecutar el bloque del 'else' si existe
+            if (variableExistente.Value is int)
+            {
+                variableExistente.Value = (int)variableExistente.Value + 1;
+            }
+            else if (variableExistente.Value is double)
+            {
+                variableExistente.Value = (double)variableExistente.Value + 1;
+            }
+            else
+            {
+                errores.setError("Semantico", "No se puede incrementar " +variable , context.Start.Line, context.Start.Column);
+                return "Error Semantico, error de tipos en la resta";
+            }
         }
-
-        return ret;
-    }
-
-    public override object VisitAsignStmt(AnalizadorParser.AsignStmtContext context)
-    {
-        var varAsign = context.varAsign();
-        string id = varAsign.ID().GetText();
-        SymbolType type = Enum.Parse<SymbolType>("Integer");
-        object value = Visit(varAsign.expr());
-
-        currentEnvironment.SetVariable(id, value, type);
+        else if (operador == "--")
+        {
+            if (variableExistente.Value is int)
+            {
+                variableExistente.Value = (int)variableExistente.Value - 1;
+            }
+            else if (variableExistente.Value is double)
+            {
+                variableExistente.Value = (double)variableExistente.Value - 1;
+            }
+            else{
+                errores.setError("Semantico", "No se puede decrementar " + variable, context.Start.Line, context.Start.Column);
+                return "Error Semantico, error de tipos en la resta";
+            }
+        }
+        currentEnvironment.SetVariable(variable, variableExistente.Value, variableExistente.Type);
         return null;
-    }
-    //WHILE
-    public override object VisitWhileStmt(AnalizadorParser.WhileStmtContext context)
-    {
-        // object condition = Visit(context.expr());
-
-        // if (condition is not bool)
-        //     throw new Exception("If statement condition must be a boolean.");
-
-        while ((bool)Visit(context.expr()))
-        {
-            Visit(context.block());
-        }
-        return null;
-
+   
     }
     public override object VisitAsigAddSub(AnalizadorParser.AsigAddSubContext context){
+        //AsigAddSub
         // c += 19
         //| ID op = ('+=' | '-=') expr				# AsigAddSub
+     
+        Console.WriteLine("AsigAddSub");
+
         var variable = context.ID().GetText();
         var operador = context.op.Text;
         var valor = Visit(context.expr());
@@ -636,8 +796,197 @@ public class InterpreteVisitor : AnalizadorBaseVisitor<object>
                 return "Error Semantico, error de tipos en la resta";
             }
         }
+        currentEnvironment.SetVariable(variable, variableExistente.Value, variableExistente.Type);
 
         
         return null;
     }
+    //ExprStmt
+    public override object VisitExprStmt(AnalizadorParser.ExprStmtContext context)
+    {
+        return Visit(context.expr());
+    }
+
+    // VisitIfStmt
+    public override object VisitIfStmt(AnalizadorParser.IfStmtContext context)
+    {
+        object condition = Visit(context.expr());
+
+        if (condition is not bool)
+            throw new Exception("If statement condition must be a boolean.");
+
+        object ret = null;
+        if ((bool)condition)
+        {
+            Entornos new_environment = new Entornos(currentEnvironment);
+
+            currentEnvironment = new_environment;
+            ret = Visit(context.block(0)); // Ejecutar el bloque del 'if'
+            currentEnvironment = new_environment.Parent;
+        }
+        else if (context.block().Length > 1)
+        {
+            ret = Visit(context.block(1)); // Ejecutar el bloque del 'else' si existe
+        }
+        else if (context.dcl() != null)
+        {
+            ret = Visit(context.dcl());
+        }
+
+        return ret;
+    }
+    
+    public override object VisitBlockStmt(AnalizadorParser.BlockStmtContext context)
+    {
+        Entornos previousEnvironment = currentEnvironment;
+        currentEnvironment = new Entornos(currentEnvironment);
+
+        foreach (var stmt in context.dcl())
+        {
+            Visit(stmt);
+        }
+
+        currentEnvironment = previousEnvironment;
+        return null;
+    }
+ 
+ public override object VisitForStmt(AnalizadorParser.ForStmtContext context)
+    {
+        Entornos EntornoPrevio = currentEnvironment;
+        currentEnvironment = new Entornos(currentEnvironment);
+
+        Visit(context.forID());
+
+        VisitForInterno(context);
+
+        currentEnvironment = EntornoPrevio;
+        return null;
+    }
+
+    public void VisitForInterno(AnalizadorParser.ForStmtContext context)
+    {
+        object condicion = Visit(context.expr(0));
+
+        var lastEnvironment = currentEnvironment;
+
+
+        if (condicion is not bool)
+        {
+            errores.setError("Sintactico", "Condición inválida en el for", context.Start.Line, context.Start.Column);
+        }
+
+
+        try
+        {
+            while ((bool)condicion )
+            {
+                Visit(context.block());
+                Visit(context.expr(1));
+                condicion = Visit(context.expr(0));
+            }
+        }
+        catch (BreakException)
+        {
+            currentEnvironment = lastEnvironment;
+        }
+        catch (ContinueException)
+        {
+            currentEnvironment = lastEnvironment;
+            Visit(context.expr(1));
+            VisitForInterno(context);
+        }
+
+    }
+    public override object VisitAsignStmt(AnalizadorParser.AsignStmtContext context)
+    {
+        var varAsign = context.varAsign();
+        string id = varAsign.ID().GetText();
+        SymbolType type = Enum.Parse<SymbolType>("Integer");
+        object value = Visit(varAsign.expr());
+
+        var VarExistente = currentEnvironment.GetVariable(id);
+        if (VarExistente != null)
+        {
+            currentEnvironment.SetVariable(id, value, VarExistente.Type); // Usa el tipo ya conocido
+        }else{
+            errores.setError("Semantico", "La variable " + id + " no existe", context.Start.Line, context.Start.Column);
+            return "Error Semantico, la variable no existe";
+        }
+
+       
+        return null;
+    }
+    //WHILE
+    public override object VisitWhileStmt(AnalizadorParser.WhileStmtContext context)
+    {
+        // object condition = Visit(context.expr());
+
+        // if (condition is not bool)
+        //     throw new Exception("If statement condition must be a boolean.");
+
+        while ((bool)Visit(context.expr()))
+        {
+            Visit(context.block());
+        }
+        return null;
+
+    }
+    
+    public override object VisitSwitchStmt(AnalizadorParser.SwitchStmtContext context)
+    {
+        object switchValue = Visit(context.expr());
+        var lastEnvironment = currentEnvironment;
+
+        try{
+                // Verificar si hay cases antes de recorrerlos
+            if (context.caseList() != null)
+            {
+                foreach (var caseStmt in context.caseList().caseStmt())
+                {
+                    if (caseStmt.expr() != null) // Evitar evaluar un expr() nulo
+                    {
+                        object caseValue = Visit(caseStmt.expr());
+
+                        if (switchValue.Equals(caseValue))
+                        {
+                            foreach (var stmt in caseStmt.dcl())
+                            {
+                                Visit(stmt);
+                            }
+                            return null;
+                        }
+                    }
+                }
+
+                // Verificar si hay un default
+                foreach (var caseStmt in context.caseList().caseStmt())
+                {
+                    if (caseStmt.GetChild(0).GetText() == "default") // Verificar si es default
+                    {
+                        foreach (var stmt in caseStmt.dcl())
+                        {
+                            Visit(stmt);
+                        }
+                        return null;
+                    }
+                }
+            }
+
+
+        }catch (BreakException)
+        {
+             currentEnvironment = lastEnvironment;
+
+        }catch (ContinueException)
+        {
+            currentEnvironment = lastEnvironment;
+            Visit(context.expr());
+            //VisitSwitchInterno(context);
+        }
+
+
+        
+        return null;
+    }
+
 }

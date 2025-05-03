@@ -6,6 +6,16 @@ public class Generador{
     private readonly StandardLibrary EstandarLib = new StandardLibrary();
     private List<StackObject> stack = new List<StackObject>();
     private int stackDepth = 0;
+    private int ContadorEtiquetas = 0;
+
+    public string GetEtiqueta()
+    {
+        return $"L{ContadorEtiquetas++}";
+    }
+    public void SetEtiqueta(string etiqueta)
+    {
+        instrucciones.Add($"{etiqueta}:");
+    }
 
     // Todo lo relacionado con el stack
     public void PushObject (StackObject stackObject)
@@ -23,7 +33,21 @@ public class Generador{
                 PushStack(Register.X0);
                 break;
             case StackObject.StackObjectType.Float:
-                
+                long valorFloat = BitConverter.DoubleToInt64Bits((double)valor);
+                short[] partes = new short[4];
+                for (int i = 0; i < 4; i++)
+                {
+                    partes[i] = (short)((valorFloat >> (i * 16)) & 0xFFFF);
+                }
+                instrucciones.Add($"MOVZ x0, #{partes[0]}, LSL #0");
+
+                for (int i = 1; i < 4; i++)
+                {
+                    instrucciones.Add($"MOVK x0, #{partes[i]}, LSL #{i * 16}");
+                }
+                PushStack(Register.X0);
+
+
                 break;
             case StackObject.StackObjectType.String:
                 List<byte> Cadenas = Utils.StringToBytes((string)valor);
@@ -38,11 +62,23 @@ public class Generador{
                     Add(Register.HP, Register.HP, Register.X0);
                 }
                 break;
+            case StackObject.StackObjectType.caracter:
+                Mov(Register.X0, (char)valor);
+                PushStack(Register.X0);
+                break;
+            case StackObject.StackObjectType.Boolean:
+                Mov(Register.X0, (bool)valor ? 1 : 0);
+                PushStack(Register.X0);
+                break;
             default:
                 throw new NotImplementedException();
         }
         PushObject(stackObject);
 
+    }
+    // Todo lo relacionado con la pila
+    public StackObject TopStack(){
+        return stack.Last();
     }
 
     public StackObject PopObject(string registro)
@@ -74,6 +110,24 @@ public class Generador{
     }
 
     public StackObject StringObject(){
+        return new StackObject
+        {
+            Type = StackObject.StackObjectType.String,
+            Length = 8,
+            Depth = stackDepth,
+            identificador = null
+        };
+    }
+    public StackObject BooleanObject(){
+        return new StackObject
+        {
+            Type = StackObject.StackObjectType.Boolean,
+            Length = 8,
+            Depth = stackDepth,
+            identificador = null
+        };
+    }
+    public StackObject RuneObject(){
         return new StackObject
         {
             Type = StackObject.StackObjectType.String,
@@ -152,10 +206,41 @@ public class Generador{
     {
         instrucciones.Add($"DIV {rd}, {registro1}, {registro2}");
     }
+    public void Cmp(string registro1, string registro2)
+    {
+        instrucciones.Add($"CMP {registro1}, {registro2}");
+    }
+
+    public void Cbz(string registro, string etiqueta)//Flag para ver si el valor es 0
+    {
+        instrucciones.Add($"CBZ {registro}, {etiqueta}");
+    }
+    
+    public void Beq(string etiqueta)
+    {
+        instrucciones.Add($"BEQ {etiqueta}");
+    }
+    public void Bne(string etiqueta)
+    {
+        instrucciones.Add($"BNE {etiqueta}");
+    }
+    public void Bgt(string etiqueta)
+    {
+        instrucciones.Add($"BGT {etiqueta}");
+    }
+    public void Blt(string etiqueta)
+    {
+        instrucciones.Add($"BLT {etiqueta}");
+    }
+
     public void Mod(string rd, string rn, string rm)
     {
         instrucciones.Add($"SDIV {Register.X9}, {rn}, {rm}");
-        instrucciones.Add($"MLS {rd}, {Register.X9}, {rm}, {rn}");
+        instrucciones.Add($"MSUB {rd}, {Register.X9}, {rm}, {rn}");
+    }
+    public void Sdiv(string rd, string rn, string rm)
+    {
+        instrucciones.Add($"SDIV {rd}, {rn}, {rm}");
     }
     
     public void Addi(string rd, string registro1, int valor)
@@ -181,14 +266,44 @@ public class Generador{
     {
         instrucciones.Add($"MOV {rd}, #{valor}");
     }
+    public void Adr(string destino, string etiqueta)
+{
+    instrucciones.Add($"ADR {destino}, {etiqueta}");
+}
+    public void MovReg(string destino, string origen)
+    {
+        instrucciones.Add($"MOV {destino}, {origen}");
+    }
 
     public void PushStack(string registro)
     {
         instrucciones.Add($"STR {registro}, [SP, #-8]!");
     }
+
+    public void Neg(string destino, string origen)
+    {
+        Comment("Negación unaria");
+        Mov(destino, 0);
+        Sub(destino, destino, origen); // destino = 0 - origen
+    }
+    public void Fcvtns(string rd, string registro)
+    {
+        instrucciones.Add($"FCVTNS {rd}, {registro}");
+    }
+    public void Fneg(string destino, string origen)
+    {
+        Comment("Negación unaria");
+        Mov(destino, 0);
+        Fsub(destino, destino, origen); // destino = 0 - origen
+    }
     public void PopStack(string registro)
     {
         instrucciones.Add($"LDR {registro}, [SP], #8");
+    }
+
+    public void B(string etiqueta)
+    {
+        instrucciones.Add($"B {etiqueta}");
     }
     public void CallSVC()
     {
@@ -205,6 +320,45 @@ public class Generador{
     {
         instrucciones.Add($"// {comentario}");
     }
+    public void Scvtf(string rd, string registro)
+    {
+        instrucciones.Add($"SCVTF {rd}, {registro}");
+    }
+    public void Fmov(string rd, string registro)
+    {
+        instrucciones.Add($"FMOV {rd}, {registro}");
+    }
+    public void Fmov1(string rd, double value)
+{
+    var valStr = value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    instrucciones.Add($"FMOV {rd}, {valStr}");
+}
+    public void Fadd(string rd, string registro1, string registro2)
+    {
+        instrucciones.Add($"FADD {rd}, {registro1}, {registro2}");
+    }
+    public void Fsub(string rd, string registro1, string registro2)
+    {
+        instrucciones.Add($"FSUB {rd}, {registro1}, {registro2}");
+    }
+    public void Fmul(string rd, string registro1, string registro2)
+    {
+        instrucciones.Add($"FMUL {rd}, {registro1}, {registro2}");
+    }
+    public void Fdiv(string rd, string registro1, string registro2)
+    {
+        instrucciones.Add($"FDIV {rd}, {registro1}, {registro2}");
+    }
+    public void Ret(){
+        instrucciones.Add($"RET");
+    }
+    public void PrintDouble()
+    {
+        EstandarLib.Use("print_integer");
+        EstandarLib.Use("print_double");
+       // instrucciones.Add($"MOV X0, {registro}");
+        instrucciones.Add($"BL print_double");
+    }
     public void PrintInteger(string registro)
     {
         EstandarLib.Use("print_integer");
@@ -218,12 +372,19 @@ public class Generador{
         instrucciones.Add($"MOV X0, {registro}");
         instrucciones.Add($"BL print_string");
     }
-
-    public void PrintDouble(string registro)
+        public void PrintBool(string registro)
     {
-        EstandarLib.Use("print_double");
+        EstandarLib.Use("print_boolean");
         instrucciones.Add($"MOV X0, {registro}");
-        instrucciones.Add($"BL print_double");
+        instrucciones.Add($"BL print_boolean");
+    }
+
+
+
+    public void ConcatenarString()
+    {
+        EstandarLib.Use("concat_strings");
+        instrucciones.Add($"BL concat_strings");
     }
 
     public override string ToString()
@@ -254,8 +415,9 @@ public class Generador{
         {
             Int,
             Float,
-            String
-           
+            String,
+            Boolean,
+            caracter     
         }
         public StackObjectType Type { get; set; }
         public int Length { get; set; }

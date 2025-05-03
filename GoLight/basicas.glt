@@ -1,23 +1,29 @@
 
 func main() {
-	puntos := 0
+	var puntos int = 0
 
 	fmt.Println("=== Archivo de prueba básico ===")
+	fmt.Println("Validaciones manuales esperadas: 4")
 
-	// 1. Declaración de variables (2 puntos)
+	// 1. Declaración de variables (3 puntos)
 	fmt.Println("==== Declaración de variables ====")
-	puntosDeclaracion := 0
-
-	fmt.Println("Declaración explícita con tipo y valor")
+	var puntosDeclaracion int = 0
+	fmt.Println("Declaracion explicita con tipo y valor")
 	var entero int = 42
-	var decimal float64 = 3.14159
-	var texto string = "Hola, mundo!"
+	var decimal float64 = 3.14
+	var texto string = "Hola!"
 	var booleano bool = true
+	var caracter rune = 'A'
 
+	fmt.Println("\n\n###Validacion Manual")
 	fmt.Println("entero:", entero)
 	fmt.Println("decimal:", decimal)
 	fmt.Println("texto:", texto)
 	fmt.Println("booleano:", booleano)
+	fmt.Println("caracter:", caracter)
+	fmt.Println("")
+
+
 
 	if entero == 42 && decimal > 3.0 && texto == "Hola, mundo!" && booleano == true {
 		puntosDeclaracion = puntosDeclaracion + 1
