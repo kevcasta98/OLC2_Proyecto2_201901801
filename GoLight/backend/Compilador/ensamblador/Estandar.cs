@@ -504,11 +504,11 @@ print_result:
     mov w8, #64                // Syscall write
     svc #0
 
-    adr x1, newline
-    mov x2, #1
-    mov x0, #1
-    mov w8, #64
-    svc #0
+    //adr x1, newline
+    //mov x2, #1
+    //mov x0, #1
+    //mov w8, #64
+    //svc #0
     
     // Clean up and restore registers
     add sp, sp, #32            // Free buffer space
@@ -546,11 +546,11 @@ print_boolean:
     mov w8, #64         // syscall write
     svc #0
 
-    adr x1, newline
-    mov x2, #1
-    mov x0, #1
-    mov w8, #64
-    svc #0
+    //adr x1, newline
+    //mov x2, #1
+    //mov x0, #1
+    //mov w8, #64
+    //svc #0
 
     ret
     "},
@@ -593,11 +593,11 @@ print_loop:
     
 print_done:
 
-    adr x1, newline
-    mov x2, #1
-    mov x0, #1
-    mov w8, #64
-    svc #0
+    //adr x1, newline
+    //mov x2, #1
+    //mov x0, #1
+    //mov w8, #64
+    //svc #0
 
     // Restore saved registers
     ldp     x19, x20, [sp], #16
@@ -786,11 +786,12 @@ print_remaining:
     
     // Ya imprimimos todos los ceros necesarios
     // No hace falta imprimir nada más
-    adr x1, newline
-    mov x2, #1
-    mov x0, #1
-    mov w8, #64
-    svc #0
+
+    //adr x1, newline
+    //mov x2, #1
+    //mov x0, #1
+    //mov w8, #64
+    //svc #0
 
 exit_function:
     // Restore context

@@ -81,12 +81,40 @@ public interface IAnalizadorVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitFuncDeclStmt([NotNull] AnalizadorParser.FuncDeclStmtContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>BreakStmt</c>
+	/// labeled alternative in <see cref="AnalizadorParser.dcl"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitBreakStmt([NotNull] AnalizadorParser.BreakStmtContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ContinueStmt</c>
+	/// labeled alternative in <see cref="AnalizadorParser.dcl"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitContinueStmt([NotNull] AnalizadorParser.ContinueStmtContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>ReturnStmt</c>
 	/// labeled alternative in <see cref="AnalizadorParser.dcl"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitReturnStmt([NotNull] AnalizadorParser.ReturnStmtContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SliceIndex</c>
+	/// labeled alternative in <see cref="AnalizadorParser.dcl"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSliceIndex([NotNull] AnalizadorParser.SliceIndexContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SliceAsign</c>
+	/// labeled alternative in <see cref="AnalizadorParser.dcl"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSliceAsign([NotNull] AnalizadorParser.SliceAsignContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>FuncCallStmt</c>
 	/// labeled alternative in <see cref="AnalizadorParser.dcl"/>.
@@ -122,6 +150,12 @@ public interface IAnalizadorVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitExprStmt([NotNull] AnalizadorParser.ExprStmtContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="AnalizadorParser.sliceDcl"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSliceDcl([NotNull] AnalizadorParser.SliceDclContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="AnalizadorParser.forID"/>.
 	/// </summary>
@@ -225,6 +259,13 @@ public interface IAnalizadorVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitRelational([NotNull] AnalizadorParser.RelationalContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>SliceDeclStmt</c>
+	/// labeled alternative in <see cref="AnalizadorParser.expr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSliceDeclStmt([NotNull] AnalizadorParser.SliceDeclStmtContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpChar</c>
 	/// labeled alternative in <see cref="AnalizadorParser.expr"/>.
 	/// </summary>
@@ -245,6 +286,13 @@ public interface IAnalizadorVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitNot([NotNull] AnalizadorParser.NotContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>AccesoSlice</c>
+	/// labeled alternative in <see cref="AnalizadorParser.expr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitAccesoSlice([NotNull] AnalizadorParser.AccesoSliceContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>MulDivMod</c>
 	/// labeled alternative in <see cref="AnalizadorParser.expr"/>.

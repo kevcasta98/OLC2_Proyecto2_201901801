@@ -12,20 +12,25 @@ program: dcl*;
 
 dcl:
 	'fmt.Println(' expr (',' expr)* ')' ';'?	# PrintStmt
-	| 'if'  expr  block ('else' (dcl|block) )?	    # IfStmt
+	
+	| 'if'  expr  block ('else' (dcl|block) )?	# IfStmt
 	| 'for' '('? expr ')'? block				# WhileStmt
-	| 'for' '('? forID expr ';' expr ')' block	# ForStmt
+	| 'for' '('? forID expr ';' expr ')'? block	# ForStmt
 	//| 'for' '(' forID expr ';' expr ')' stmt	  # ForStmt
-	| 'switch' expr '{' caseList '}'	    # SwitchStmt
+	| 'switch' expr '{' caseList '}'	    	# SwitchStmt
 	| 'func' ID '(' parametros? ')' tipo? block	# FuncDeclStmt
+	| 'break' ';'?								# BreakStmt
+	| 'continue' ';'?							# ContinueStmt
 	| 'return' expr ';'?						# ReturnStmt
+	| 'slice.Index' '(' expr ',' expr ')'	# SliceIndex
+	| ID '[' expr ']' '=' expr ';'?			# SliceAsign
 	| varCall ';'?								# FuncCallStmt
 	| varAsign									# AsignStmt
 	| varDcl									# VarDeclStmt	
 	| '{' dcl* '}'								# BlockStmt
-	| expr ';'?							# ExprStmt					
+	| expr ';'?									# ExprStmt					
 ;
-
+sliceDcl: ID ':=' '[' ']' tipo '{' expr (',' expr)* '}' ';'?;
 forID: varDcl | expr ';';
 caseList: caseStmt+;  
 caseStmt: 'case' expr ':' dcl*  // Cada case puede tener varias sentencias
@@ -37,6 +42,8 @@ block: '{' dcl* '}';
 varDcl: 'var' ID tipo (IGUAL expr)? ';'? | ID ':=' expr ';'?;
 
 varAsign: ID '=' expr ';'?;
+
+//sliceDcl: ID ('=') '[' ']' tipo '{' expr (',' expr)* '}' ';'?;
 
 varCall: ID '(' args? ')';
 
@@ -56,7 +63,8 @@ expr:
 	| ID op = ('+=' | '-=') expr				# AsigAddSub
 	| expr op = '&&' expr						# And
 	| expr op = '||' expr						# Or
-
+	| sliceDcl									# SliceDeclStmt
+	| ID '[' expr ']' 							# AccesoSlice	
 	| INT							# ExpInteger
 	| DECIMAL						# ExpDouble
 	| CADENA						# ExpString

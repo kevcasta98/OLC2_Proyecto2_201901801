@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Text;
+using System.Globalization;
 
 public class Generador{
     private readonly List<string> instrucciones = new List<string>();
@@ -34,10 +35,10 @@ public class Generador{
                 break;
             case StackObject.StackObjectType.Float:
                 long valorFloat = BitConverter.DoubleToInt64Bits((double)valor);
-                short[] partes = new short[4];
+                ushort[] partes = new ushort[4]; // aquí usamos ushort
                 for (int i = 0; i < 4; i++)
                 {
-                    partes[i] = (short)((valorFloat >> (i * 16)) & 0xFFFF);
+                    partes[i] = (ushort)((valorFloat >> (i * 16)) & 0xFFFF); // conversión explícita a ushort
                 }
                 instrucciones.Add($"MOVZ x0, #{partes[0]}, LSL #0");
 
@@ -46,8 +47,6 @@ public class Generador{
                     instrucciones.Add($"MOVK x0, #{partes[i]}, LSL #{i * 16}");
                 }
                 PushStack(Register.X0);
-
-
                 break;
             case StackObject.StackObjectType.String:
                 List<byte> Cadenas = Utils.StringToBytes((string)valor);
@@ -55,6 +54,7 @@ public class Generador{
                 for(int i = 0; i < Cadenas.Count; i++)
                 {
                     var charCode = Cadenas[i];
+
                     Comment($"Guardando el caracter {charCode} - ({(char)charCode}) en la posicion {Register.HP}");
                     Mov("w0", charCode);
                     Strb("w0", Register.HP);
@@ -136,6 +136,17 @@ public class Generador{
             identificador = null
         };
     }
+        public StackObject SliceObject(){
+        return new StackObject
+        {
+            Type = StackObject.StackObjectType.Slice,
+            Length = 8,
+            Depth = stackDepth,
+            identificador = null
+        };
+        
+    }
+
 
     public StackObject ClonarObject(StackObject obj){
         return new StackObject
@@ -197,6 +208,22 @@ public class Generador{
     public void Sub(string rd, string registro1, string registro2)
     {
         instrucciones.Add($"SUB {rd}, {registro1}, {registro2}");
+    }
+    public void Ldrb(string rd, string registro1)
+    {
+        instrucciones.Add($"LDRB {rd}, [{registro1}]");
+    }
+    public void Fcmp(string registro1, string registro2)
+    {
+        instrucciones.Add($"FCMP {registro1}, {registro2}");
+    }
+    public void Ble(string etiqueta)
+    {
+        instrucciones.Add($"BLE {etiqueta}");
+    }
+    public void Bge(string etiqueta)
+    {
+        instrucciones.Add($"BGE {etiqueta}");
     }
     public void Mul(string rd, string registro1, string registro2)
     {
@@ -417,9 +444,11 @@ public class Generador{
             Float,
             String,
             Boolean,
-            caracter     
+            caracter,
+            Slice   
         }
         public StackObjectType Type { get; set; }
+        public object Value { get; set; } 
         public int Length { get; set; }
         public int Depth { get; set; }// Este es como mi padre y aumentare a 1 por cada entorno 
         public string? identificador { get; set; }

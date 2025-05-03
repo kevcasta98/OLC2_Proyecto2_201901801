@@ -50,4 +50,40 @@ public class TablaSimbolos {
     public List<Simbolo> ObtenerSimbolos() {
         return simbolos;
     }
+    public string GenerarHTMLTablaSimbolos()
+{
+    if (simbolos.Count == 0) return "<p>No se encontraron símbolos.</p>";
+
+    StringBuilder html = new StringBuilder();
+
+    html.Append("<table border='1' style='border-collapse: collapse; width: 100%; text-align: center;'>");
+    html.Append("<thead style='background-color: #4CAF50; color: white;'>");
+    html.Append("<tr>");
+    html.Append("<th>ID</th>");
+    html.Append("<th>Tipo de Símbolo</th>");
+    html.Append("<th>Tipo de Dato</th>");
+    html.Append("<th>Ámbito</th>");
+    html.Append("<th>Línea</th>");
+    html.Append("<th>Columna</th>");
+    html.Append("</tr>");
+    html.Append("</thead>");
+    html.Append("<tbody>");
+
+    foreach (var simbolo in simbolos)
+    {
+        html.Append("<tr>");
+        html.AppendFormat("<td>{0}</td>", simbolo.ID);
+        html.AppendFormat("<td>{0}</td>", simbolo.TipoSimbolo);
+        html.AppendFormat("<td>{0}</td>", simbolo.TipoDato);
+        html.AppendFormat("<td>{0}</td>", simbolo.Ambito);
+        html.AppendFormat("<td>{0}</td>", simbolo.Linea);
+        html.AppendFormat("<td>{0}</td>", simbolo.Columna);
+        html.Append("</tr>");
+    }
+
+    html.Append("</tbody>");
+    html.Append("</table>");
+
+    return html.ToString();
+}
 }

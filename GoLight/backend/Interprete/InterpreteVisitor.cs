@@ -10,6 +10,7 @@ public class InterpreteVisitor : AnalizadorBaseVisitor<object>
     public Errores errores = new Errores();
     private Dictionary<string, (List<string> parameters, AnalizadorParser.BlockContext body)> functions = new();
 
+    //public Simbolo simbolos;
     // VisitProgram
     public override object VisitProgram(AnalizadorParser.ProgramContext context)
     {
@@ -17,6 +18,7 @@ public class InterpreteVisitor : AnalizadorBaseVisitor<object>
         {
             Visit(dcl);
         }
+        
         return null;
     }
 

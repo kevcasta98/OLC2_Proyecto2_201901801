@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("GoLight")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e9754dc087b9072d2e6bc8e0953f3bb20a59ba17")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c1b5618246868f6524a533080dd0aa3abe7a4c4b")]
 [assembly: System.Reflection.AssemblyProductAttribute("GoLight")]
 [assembly: System.Reflection.AssemblyTitleAttribute("GoLight")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -7,10 +7,17 @@ public class CompiladorVisitor : AnalizadorBaseVisitor<object?>
 {
 
     public Generador codigo = new Generador();
+    private string? EntornoExprType; // para saber el tipo de expresion actual del entorno
+
+    private String? EtiquetaContinue = null;// Etiqueta para el continue
+
+    private String? EtiquetaBreak = null;// Etiqueta para el break
+
+    private String? EtiquetaReturn = null;// Etiqueta para el return
 
     public CompiladorVisitor()
     {
-       
+       EntornoExprType = null;
     }
     // VisitProgram
     public override object VisitProgram(AnalizadorParser.ProgramContext context)
@@ -44,9 +51,173 @@ public class CompiladorVisitor : AnalizadorBaseVisitor<object?>
 
     public override object VisitFuncDeclStmt(AnalizadorParser.FuncDeclStmtContext context)
     {
-       
+        /*int baseOffset = 2;
+        int paramsOffset = 0;
+
+        if(context.@parametros() != null)
+        {
+            paramsOffset = context.@parametros().param().Length;
+        }
+
+        FrameVisitor frameVisitor = new FrameVisitor(baseOffset + paramsOffset);
+
+        
+        frameVisitor.Visit(context.block());
+        
+
+        var frame = frameVisitor.Frame;
+        int localOffset = frame.Count;
+        int returnOffset = 1;
+
+        int totalFrameSize = baseOffset + paramsOffset + localOffset + returnOffset;
+
+        string funcName = context.ID().GetText();
+        StackObject.StackObjectType funcType = GetType(context.ID(1).GetText());
+
+        Console.WriteLine("Total frame: " + totalFrameSize);
+
+        functions.Add(funcName, new FunctionMetadata
+        {
+                totalFrameSize = totalFrameSize,
+                ReturnTypeEncoder = funcType
+        });
+
+        // el frame visitor hereda del language base visitor, este manejara un elemento del frame 
+        return null;*/
         return null;
     }
+    //declarar slice
+    public override object VisitSliceDcl([NotNull] AnalizadorParser.SliceDclContext context)
+    {
+        codigo.Comment($"Declaración del Vector");
+
+        if (context.expr() != null)
+        {
+            codigo.PushStack(Register.HP);
+
+            foreach (var value in context.expr())
+            {
+                Visit(value);
+                codigo.PopObject(Register.X0);     // Valor de la expresión
+                codigo.Mov(Register.X1, 1);        // Constante 1
+                codigo.Add(Register.X0, Register.X0, Register.X1); // Ajuste valor (+1)
+                codigo.Str(Register.X0, Register.HP, 8);             // Guardar en memoria
+                //codigo.Addi(Register.HP, Register.HP, 1);          // HP++
+            }
+
+            codigo.Str(Register.XZR, Register.HP, 8); // byte nulo al final
+           // codigo.Addi(Register.HP, Register.HP, 1);
+        }
+        
+        // Simulación de objeto tipo slice
+        codigo.PushObject(codigo.SliceObject());
+    
+
+        codigo.tagObject(context.ID().GetText());
+        return null;
+    }
+    public override object VisitSliceAsign([NotNull] AnalizadorParser.SliceAsignContext context)
+    {
+        
+	//| ID '[' expr ']' '=' expr ';'?			# SliceAsign
+
+        string id = context.ID().GetText();
+        codigo.Comment($"Asignación al Slice: {id}");
+
+      
+
+        // Evaluar el valor a asignar y el índice
+        Visit(context.expr(1)); // valor → X0
+        Visit(context.expr(0)); // índice → X2
+
+        codigo.PopObject(Register.X2); // índice
+        codigo.PopObject(Register.X0); // valor
+        //codigo.Addi(Register.X0, Register.X0, 8); // Ajuste del valor
+
+        // Obtener la dirección base del slice
+        var (offset, tipo) = codigo.GetObject(id);
+        codigo.Mov(Register.X1, offset); // puntero es un int
+        codigo.Add(Register.X1, Register.HP, Register.X1); // ← Aquí estás usando ADD
+
+        // Inicializar contador
+        codigo.Mov(Register.X3, 0); // contador
+
+        // Etiquetas
+        string loop = codigo.GetEtiqueta();
+        string fin = codigo.GetEtiqueta();
+       
+        string exit = codigo.GetEtiqueta();
+
+        codigo.SetEtiqueta(loop);
+        codigo.Ldr(Register.X4, Register.X1,8);       // cargar byte actual
+        
+        codigo.Cmp(Register.X3, Register.X2);        // contador == índice
+        codigo.Beq(fin);                             // si sí, salta a asignar
+
+        // avanzar a siguiente posición
+        codigo.Addi(Register.X3, Register.X3, 1);     // contador++
+        codigo.Addi(Register.X1, Register.X1, 1);     // mover puntero
+        codigo.B(loop);                               // repetir
+
+
+        // Asignación
+        codigo.SetEtiqueta(fin);
+        codigo.Str(Register.X0, Register.X1,8);        // guardar valor en posición
+        codigo.B(exit);
+
+        codigo.SetEtiqueta(exit);
+        return null;
+    }
+    public override object VisitAccesoSlice([NotNull] AnalizadorParser.AccesoSliceContext context)
+{
+    string id = context.ID().GetText();
+    codigo.Comment($"Acceso al Slice: {id}");
+
+    // Evaluar el índice
+    Visit(context.expr());
+    codigo.PopObject(Register.X0); // índice
+
+    // Obtener la dirección base del slice
+    var (offset, tipo) = codigo.GetObject(id);
+    codigo.Mov(Register.X1, offset);                 // offset base
+    codigo.Add(Register.X1, Register.HP, Register.X1); // dirección base real
+
+    // Inicializar contador
+    codigo.Mov(Register.X3, 0); // contador
+
+    // Etiquetas
+    string loop = codigo.GetEtiqueta();
+    string fin = codigo.GetEtiqueta();
+    string error = codigo.GetEtiqueta();
+    string exit = codigo.GetEtiqueta();
+
+    codigo.SetEtiqueta(loop);
+    codigo.Ldrb(Register.X4, Register.X1);       // cargar byte actual
+    codigo.Cbz(Register.X4, error);              // si byte es 0, fin del slice, error
+    codigo.Cmp(Register.X3, Register.X0);        // contador == índice
+    codigo.Beq(fin);                             // si sí, saltar a acceso
+
+    // avanzar
+    codigo.Addi(Register.X3, Register.X3, 1);
+    codigo.Addi(Register.X1, Register.X1, 1);
+    codigo.B(loop);
+
+    // Obtener el valor
+    codigo.SetEtiqueta(fin);
+    codigo.Ldrb(Register.X0, Register.X1);       // cargar valor en X0
+    codigo.Mov(Register.X2, 1);     // guardar puntero en X1
+    codigo.Sub(Register.X0, Register.X0, Register.X2);     // ajuste (-1) si al guardar se hizo +1
+    codigo.PushStack(Register.X0);       // devolver valor a la pila como objeto tipo int
+    codigo.B(exit);
+
+    // Error
+    codigo.SetEtiqueta(error);
+    codigo.Comment("Error: índice fuera de rango");
+
+    codigo.SetEtiqueta(exit);
+    return null;
+}
+
 
     public override object VisitFuncCallStmt([NotNull] AnalizadorParser.FuncCallStmtContext context)
     {
@@ -71,65 +242,152 @@ public class CompiladorVisitor : AnalizadorBaseVisitor<object?>
     {
         codigo.Comment("Estoy en Relacional");
         var operador = context.op.Text;
-        Visit(context.expr(0)); // visit 1; Pila[5]
-        Visit(context.expr(1));  // visit 2; Pila[2,5]
+
+        // Visita ambas expresiones
+        Visit(context.expr(0)); // izquierda
+        Visit(context.expr(1)); // derecha
 
         var isDerFloat = codigo.TopStack().Type == Generador.StackObject.StackObjectType.Float;
-        var der = codigo.PopObject(isDerFloat ? Register.D0 : Register.X0);//Sale el 2
+        var der = codigo.PopObject(isDerFloat ? Register.D1 : Register.X1); // Derecha en D1 o X1
         var isIzqFloat = codigo.TopStack().Type == Generador.StackObject.StackObjectType.Float;
-        var izq = codigo.PopObject(isIzqFloat ? Register.D1 : Register.X1); //Sale el 5
-        var tipoIzq = izq.Type;
-        //usar izq.Type 
-        var tipoDer = der.Type;
+        var izq = codigo.PopObject(isIzqFloat ? Register.D0 : Register.X0); // Izquierda en D0 o X0
 
-        if(isDerFloat || isIzqFloat)
-        {
-            if(isIzqFloat) codigo.Scvtf(Register.D0, Register.X0);
-            if(isDerFloat) codigo.Scvtf(Register.D1, Register.X1);
-            
-
-            codigo.PushStack(Register.D0);
-            codigo.PushObject(codigo.ClonarObject(isIzqFloat ? izq : der));
-            
-            return null;
-        }
-        codigo.Cmp(Register.X1, Register.X0);//x1 = var de la izquierda
         var trueLabel = codigo.GetEtiqueta();
         var endLabel = codigo.GetEtiqueta();
-        switch(operador)
+
+        if (isDerFloat || isIzqFloat)
         {
-            case "<":
-                codigo.Blt(trueLabel);
-                break;
-            case ">":
-                codigo.Blt(trueLabel);
-                break;
-            case "<=":
-                codigo.Blt(trueLabel);
-                break;
-            case ">=":
-                codigo.Blt(trueLabel);
-                break;
-            case "==":
-                //codigo.Cmp(Register.X1, Register.X0);
-                codigo.Blt(trueLabel);
-                break;
-            case "!=":
-                codigo.Blt(trueLabel);
-                break;
+            // Convertir enteros a float si es necesario
+            if (!isIzqFloat) codigo.Scvtf(Register.D0, Register.X0); // Izq a float
+            if (!isDerFloat) codigo.Scvtf(Register.D1, Register.X1); // Der a float
+
+            // Comparación flotante
+            codigo.Fcmp(Register.D0, Register.D1);
+
+            switch (operador)
+            {
+                case "<":
+                    codigo.Blt(trueLabel);
+                    break;
+                case ">":
+                    codigo.Bgt(trueLabel);
+                    break;
+                case "<=":
+                    codigo.Ble(trueLabel);
+                    break;
+                case ">=":
+                    codigo.Bge(trueLabel);
+                    break;
+                
+            }
+        }
+        else
+        {
+            // Comparación entera
+            codigo.Cmp(Register.X0, Register.X1); // izq vs der
+
+            switch (operador)
+            {
+                case "<":
+                    codigo.Blt(trueLabel);
+                    break;
+                case ">":
+                    codigo.Bgt(trueLabel);
+                    break;
+                case "<=":
+                    codigo.Ble(trueLabel);
+                    break;
+                case ">=":
+                    codigo.Bge(trueLabel);
+                    break;
+                
+            }
         }
 
+        // Si no se cumple, falso
         codigo.Mov(Register.X0, 0);
         codigo.PushStack(Register.X0);
         codigo.B(endLabel);
+
+        // Si se cumple, verdadero
         codigo.SetEtiqueta(trueLabel);
         codigo.Mov(Register.X0, 1);
         codigo.PushStack(Register.X0);
-        codigo.SetEtiqueta(endLabel);
 
+        // Final
+        codigo.SetEtiqueta(endLabel);
         codigo.PushObject(codigo.BooleanObject());
+
         return null;
     }
+    public override object VisitIgualDesigual([NotNull] AnalizadorParser.IgualDesigualContext context)
+    {
+        var operador = context.op.Text;
+
+        // Visita ambas expresiones
+        Visit(context.expr(0)); // izquierda
+        Visit(context.expr(1)); // derecha
+
+        var isDerFloat = codigo.TopStack().Type == Generador.StackObject.StackObjectType.Float;
+        var der = codigo.PopObject(isDerFloat ? Register.D1 : Register.X1); // Derecha en D1 o X1
+        var isIzqFloat = codigo.TopStack().Type == Generador.StackObject.StackObjectType.Float;
+        var izq = codigo.PopObject(isIzqFloat ? Register.D0 : Register.X0); // Izquierda en D0 o X0
+
+        var trueLabel = codigo.GetEtiqueta();
+        var endLabel = codigo.GetEtiqueta();
+
+        if (isDerFloat || isIzqFloat)
+        {
+            // Convertir enteros a float si es necesario
+            if (!isIzqFloat) codigo.Scvtf(Register.D0, Register.X0); // Izq a float
+            if (!isDerFloat) codigo.Scvtf(Register.D1, Register.X1); // Der a float
+
+            // Comparación flotante
+            codigo.Fcmp(Register.D0, Register.D1);
+
+            switch (operador)
+            {
+                case "==":
+                    codigo.Beq(trueLabel);
+                    break;
+                case "!=":
+                    codigo.Bne(trueLabel);
+                    break;              
+            }
+        }
+        else
+        {
+            // Comparación entera
+            codigo.Cmp(Register.X0, Register.X1); // izq vs der
+
+            switch (operador)
+            {
+                case "==":
+                    codigo.Beq(trueLabel);
+                    break;
+                case "!=":
+                    codigo.Bne(trueLabel);
+                    break;    
+            }
+        }
+
+        // Si no se cumple, falso
+        codigo.Mov(Register.X0, 0);
+        codigo.PushStack(Register.X0);
+        codigo.B(endLabel);
+
+        // Si se cumple, verdadero
+        codigo.SetEtiqueta(trueLabel);
+        codigo.Mov(Register.X0, 1);
+        codigo.PushStack(Register.X0);
+        // Final
+
+        codigo.SetEtiqueta(endLabel);
+        codigo.PushObject(codigo.BooleanObject());
+
+        return null;
+    }
+    
 
     // VisitVarDcl
     public override object VisitVarDeclStmt(AnalizadorParser.VarDeclStmtContext context)
@@ -176,32 +434,36 @@ public class CompiladorVisitor : AnalizadorBaseVisitor<object?>
         codigo.Comment("Imprimir");
         foreach (var expr in context.expr()) // Visitar cada expresión a imprimir
         {
-            Visit(expr);         
-        
-        }
-            var isFLoat = codigo.TopStack().Type == Generador.StackObject.StackObjectType.Float;
-            var valor = codigo.PopObject(isFLoat ? Register.D0 : Register.X0); // Sale el valor a imprimir
+            Visit(expr);  
+            var isFloat = codigo.TopStack().Type == Generador.StackObject.StackObjectType.Float;
+            var valor = codigo.PopObject(isFloat ? Register.D0 : Register.X0); // Sale el valor a imprimir
 
-            if(valor.Type == Generador.StackObject.StackObjectType.Int)
+            if (valor.Type == Generador.StackObject.StackObjectType.Int)
             {
                 codigo.PrintInteger(Register.X0);
-
             }
-            else if(valor.Type == Generador.StackObject.StackObjectType.String)
+            else if (valor.Type == Generador.StackObject.StackObjectType.String)
             {
                 codigo.PrintString(Register.X0);
-                
             }
-            else if(valor.Type == Generador.StackObject.StackObjectType.Float)
+            else if (valor.Type == Generador.StackObject.StackObjectType.Float)
             {
                 codigo.PrintDouble();
             }
-            else if(valor.Type == Generador.StackObject.StackObjectType.Boolean)
+            else if (valor.Type == Generador.StackObject.StackObjectType.Boolean)
             {
                 codigo.PrintBool(Register.X0);
-            }
-
-            codigo.Add(Register.SP, Register.SP, "#8");
+            }       
+        
+        }
+            // Salto de línea al final del print
+        codigo.Comment("Salto de línea");
+        codigo.Adr("x1", "newline");
+        codigo.Mov("x2", 1);
+        codigo.Mov("x0", 1);
+        codigo.Mov("w8", 64);
+        codigo.CallSVC();
+            
         return null;
     }
 
@@ -229,10 +491,12 @@ public class CompiladorVisitor : AnalizadorBaseVisitor<object?>
 
     public override object VisitParens(AnalizadorParser.ParensContext context)
     {
+        Visit(context.expr());
         return null;
     }
     public override object VisitCorchetes(AnalizadorParser.CorchetesContext context)
     {
+        Visit(context.expr());
         return null;
     }
 
@@ -340,10 +604,12 @@ public class CompiladorVisitor : AnalizadorBaseVisitor<object?>
     public override object VisitExpString(AnalizadorParser.ExpStringContext context)
     {
         var valor = context.CADENA().GetText().Trim('"');
+        
         codigo.Comment("Estoy en ExpString "+ valor);
         var stringValue = codigo.StringObject();
+
         codigo.PushConstantes(stringValue, valor);
-       
+        
         return null;
     }
 
@@ -372,7 +638,7 @@ public class CompiladorVisitor : AnalizadorBaseVisitor<object?>
     {
         //5+2
         var operador = context.op.Text;
-        codigo.Comment("Estoy en AddSub");
+        codigo.Comment("Estoy MulDivMod");
         codigo.Comment("izquierda: " );
         Visit(context.expr(0)); // visit 1; Pila[5]
         codigo.Comment("derecha: " );
@@ -433,6 +699,83 @@ public class CompiladorVisitor : AnalizadorBaseVisitor<object?>
     // VisitAddSub
     public override object VisitAddSub(AnalizadorParser.AddSubContext context)
     {
+        var operador = context.op.Text;
+        codigo.Comment("Estoy en AddSub");
+
+        // Visitar operandos
+        codigo.Comment("Evaluando expresión izquierda");
+        Visit(context.expr(0));
+        codigo.Comment("Evaluando expresión derecha");
+        Visit(context.expr(1));
+
+        // Detectar tipos de operandos
+        var isDerFloat = codigo.TopStack().Type == Generador.StackObject.StackObjectType.Float;
+        var isDerString = codigo.TopStack().Type == Generador.StackObject.StackObjectType.String;
+        var der = codigo.PopObject(isDerFloat ? Register.D0 : Register.X0); // Derecha
+
+        var isIzqFloat = codigo.TopStack().Type == Generador.StackObject.StackObjectType.Float;
+        var isIzqString = codigo.TopStack().Type == Generador.StackObject.StackObjectType.String;
+        var izq = codigo.PopObject(isIzqFloat ? Register.D1 : Register.X1); // Izquierda
+
+        var tipoIzq = izq.Type;
+        var tipoDer = der.Type;
+
+        // Caso: operación entre flotantes o combinación entero/float
+        if (isDerFloat || isIzqFloat)
+        {
+            // Convertir enteros a float si es necesario
+            if (!isIzqFloat) codigo.Scvtf(Register.D1, Register.X1); // izq
+            if (!isDerFloat) codigo.Scvtf(Register.D0, Register.X0); // der
+
+            if (operador == "+")
+                codigo.Fadd(Register.D0, Register.D1, Register.D0); // D0 = izq + der
+            else if (operador == "-")
+                codigo.Fsub(Register.D0, Register.D1, Register.D0); // D0 = izq - der
+
+            codigo.PushStack(Register.D0);
+            codigo.PushObject(codigo.FloatObject());
+            return null;
+        }
+
+        // Caso: operación entre cadenas (solo +)
+        if (isIzqString && isDerString)
+        {
+            if (operador == "+")
+            {
+                codigo.Comment("Concatenación de strings");
+                codigo.PushStack(Register.X1); // izq
+                codigo.PushStack(Register.X0); // der
+                codigo.ConcatenarString();     // resultado en X0
+                codigo.PushStack(Register.X0);
+                codigo.PushObject(codigo.StringObject());
+            }
+            return null;
+        }
+
+        // Caso: operación entre enteros
+        if (tipoIzq == Generador.StackObject.StackObjectType.Int &&
+            tipoDer == Generador.StackObject.StackObjectType.Int)
+        {
+            if (operador == "+")
+            {
+                codigo.Add(Register.X0, Register.X1, Register.X0); // X0 = izq + der
+            }
+            else if (operador == "-")
+            {
+                codigo.Sub(Register.X0, Register.X1, Register.X0); // X0 = izq - der
+            }
+
+            codigo.PushStack(Register.X0);
+            codigo.PushObject(codigo.ClonarObject(izq));
+            return null;
+        }
+
+        // Si no se pudo procesar
+        codigo.Comment("Operación no soportada entre los tipos dados.");
+        return null;
+    }
+    /*public override object VisitAddSub(AnalizadorParser.AddSubContext context)
+    {
         //5+2
         var operador = context.op.Text;
         codigo.Comment("Estoy en AddSub");
@@ -455,19 +798,22 @@ public class CompiladorVisitor : AnalizadorBaseVisitor<object?>
         var tipoIzq = izq.Type;
         var tipoDer = der.Type;
 
-        if(isDerFloat || isIzqFloat)
+        if (isDerFloat || isIzqFloat)
         {
-            if(isIzqFloat) codigo.Scvtf(Register.D0, Register.X0);
-            if(isDerFloat) codigo.Scvtf(Register.D1, Register.X1);
-            if(operador == "+"){
-                codigo.Fadd(Register.D0, Register.D0, Register.D1);
-            }
-            else if(operador == "-"){
-                codigo.Fsub(Register.D0, Register.D1, Register.D0);
-            }
+            // Si ambos ya son float, no conviertas nada
+            if (!isIzqFloat)
+                codigo.Scvtf(Register.D0, Register.X0); // Convertir entero izquierdo a float
+            if (!isDerFloat)
+                codigo.Scvtf(Register.D1, Register.X1); // Convertir entero derecho a float
+
+            if (operador == "+")
+                codigo.Fadd(Register.D0, Register.D0, Register.D1); // D0 = D0 + D1
+            else if (operador == "-")
+                codigo.Fsub(Register.D0, Register.D1, Register.D0); // D0 = D0 - D1
+
             codigo.PushStack(Register.D0);
-            codigo.PushObject(codigo.ClonarObject(isIzqFloat ? izq : der));
-            
+            codigo.PushObject(codigo.FloatObject());
+
             return null;
         }
         //Trabajar los strings como los flotantes
@@ -513,7 +859,7 @@ public class CompiladorVisitor : AnalizadorBaseVisitor<object?>
        
         return null;
 
-    }
+    }*/
 
     public override object VisitIncrementoDecremento([NotNull] AnalizadorParser.IncrementoDecrementoContext context)
     {
@@ -646,10 +992,97 @@ public class CompiladorVisitor : AnalizadorBaseVisitor<object?>
     //WHILE
     public override object VisitWhileStmt(AnalizadorParser.WhileStmtContext context)
     {
-       
+        //Este es el for tipo while
+        codigo.Comment("Estoy en for tipo while");
+    
+        var condicion = codigo.GetEtiqueta();
+        var endLabel = codigo.GetEtiqueta();
+
+        var prevContinueLabel = EtiquetaContinue;
+        var prevBreakLabel = EtiquetaBreak;
+        EtiquetaContinue = condicion;
+        EtiquetaBreak = endLabel;
+
+        codigo.SetEtiqueta(condicion);
+        Visit(context.expr());
+        codigo.PopObject(Register.X0);
+        codigo.Cbz(Register.X0, endLabel);
+        Visit(context.block());
+        codigo.B(condicion);
+        codigo.SetEtiqueta(endLabel);
+
+        codigo.Comment("End of while statement");
+
+        EtiquetaContinue = prevContinueLabel;
+        EtiquetaBreak = prevBreakLabel;      
         
         return null;
 
+    }
+    public override object VisitForStmt(AnalizadorParser.ForStmtContext context)
+    {
+        //Este es el for tipo for
+        codigo.Comment("Estoy en el for clasico");
+        var startLabel = codigo.GetEtiqueta();
+        var endLabel = codigo.GetEtiqueta();
+        var incrementLabel = codigo.GetEtiqueta(); 
+
+        var prevContinueLabel = EtiquetaContinue;
+        var prevBreakLabel = EtiquetaBreak;
+
+        EtiquetaContinue = incrementLabel;
+        EtiquetaBreak = endLabel;
+
+        codigo.NewScope();
+
+        Visit(context.forID());
+        codigo.SetEtiqueta(startLabel);
+        Visit(context.expr(0));
+        codigo.PopObject(Register.X0);
+        codigo.Cbz(Register.X0, endLabel);
+        Visit(context.block());
+        codigo.SetEtiqueta(incrementLabel);
+        Visit(context.expr(1));
+        codigo.B(startLabel);
+        codigo.SetEtiqueta(endLabel);
+
+        codigo.Comment("End of for statement");
+
+        var bytesToRemove = codigo.EndScope();
+        if(bytesToRemove > 0)
+        {
+            codigo.Comment("Removing " + bytesToRemove + "bytes from stack");
+            codigo.Mov(Register.X0, bytesToRemove);
+            codigo.Add(Register.SP, Register.SP, Register.X0 );
+            codigo.Comment("stack pointer adjusted");
+        }
+
+        EtiquetaContinue = prevContinueLabel;
+        EtiquetaBreak = prevBreakLabel;
+        return null;
+
+    }
+    //continue
+    public override object VisitContinueStmt(AnalizadorParser.ContinueStmtContext context)
+    {
+        codigo.Comment("Estoy en continue");
+        if (EtiquetaContinue == null)
+        {
+            throw new Exception("Error: continue statement outside of loop");
+        }
+        codigo.B(EtiquetaContinue);
+        return null;
+    }
+    //break
+    public override object VisitBreakStmt(AnalizadorParser.BreakStmtContext context)
+    {
+        codigo.Comment("Estoy en break");
+        if (EtiquetaBreak == null)
+        {
+            throw new Exception("Error: break statement outside of loop");
+        }
+        codigo.B(EtiquetaBreak);
+        return null;
     }
     public override object VisitAsigAddSub(AnalizadorParser.AsigAddSubContext context){
         

@@ -112,6 +112,28 @@ public partial class AnalizadorBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitFuncDeclStmt([NotNull] AnalizadorParser.FuncDeclStmtContext context) { return VisitChildren(context); }
 	/// <summary>
+	/// Visit a parse tree produced by the <c>BreakStmt</c>
+	/// labeled alternative in <see cref="AnalizadorParser.dcl"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitBreakStmt([NotNull] AnalizadorParser.BreakStmtContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ContinueStmt</c>
+	/// labeled alternative in <see cref="AnalizadorParser.dcl"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitContinueStmt([NotNull] AnalizadorParser.ContinueStmtContext context) { return VisitChildren(context); }
+	/// <summary>
 	/// Visit a parse tree produced by the <c>ReturnStmt</c>
 	/// labeled alternative in <see cref="AnalizadorParser.dcl"/>.
 	/// <para>
@@ -122,6 +144,28 @@ public partial class AnalizadorBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	public virtual Result VisitReturnStmt([NotNull] AnalizadorParser.ReturnStmtContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SliceIndex</c>
+	/// labeled alternative in <see cref="AnalizadorParser.dcl"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitSliceIndex([NotNull] AnalizadorParser.SliceIndexContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SliceAsign</c>
+	/// labeled alternative in <see cref="AnalizadorParser.dcl"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitSliceAsign([NotNull] AnalizadorParser.SliceAsignContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by the <c>FuncCallStmt</c>
 	/// labeled alternative in <see cref="AnalizadorParser.dcl"/>.
@@ -177,6 +221,16 @@ public partial class AnalizadorBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	public virtual Result VisitExprStmt([NotNull] AnalizadorParser.ExprStmtContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="AnalizadorParser.sliceDcl"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitSliceDcl([NotNull] AnalizadorParser.SliceDclContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="AnalizadorParser.forID"/>.
 	/// <para>
@@ -344,6 +398,17 @@ public partial class AnalizadorBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitRelational([NotNull] AnalizadorParser.RelationalContext context) { return VisitChildren(context); }
 	/// <summary>
+	/// Visit a parse tree produced by the <c>SliceDeclStmt</c>
+	/// labeled alternative in <see cref="AnalizadorParser.expr"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitSliceDeclStmt([NotNull] AnalizadorParser.SliceDeclStmtContext context) { return VisitChildren(context); }
+	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpChar</c>
 	/// labeled alternative in <see cref="AnalizadorParser.expr"/>.
 	/// <para>
@@ -376,6 +441,17 @@ public partial class AnalizadorBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	public virtual Result VisitNot([NotNull] AnalizadorParser.NotContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>AccesoSlice</c>
+	/// labeled alternative in <see cref="AnalizadorParser.expr"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitAccesoSlice([NotNull] AnalizadorParser.AccesoSliceContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by the <c>MulDivMod</c>
 	/// labeled alternative in <see cref="AnalizadorParser.expr"/>.
